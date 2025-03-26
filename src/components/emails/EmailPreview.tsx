@@ -1,74 +1,39 @@
 
 import React, { useState, useEffect } from 'react';
-import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchEmailById, EmailDetail, markEmailAsRead } from '@/lib/gmail';
+import { fetchEmailById, EmailDetail } from '@/lib/gmail';
 import { ComposeEmail } from './ComposeEmail';
 import { Button } from '@/components/ui/button';
 
 interface EmailPreviewProps {
   emailId: string | null;
-  onEmailRead?: (emailId: string) => void;
 }
 
-export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead }) => {
+export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
   const [email, setEmail] = useState<EmailDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [replyOpen, setReplyOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
-  const loadEmailDetails = async () => {
-    if (!emailId || !user?.accessToken) {
-      setEmail(null);
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      console.log(`Loading email details for ID: ${emailId} with token: ${user.accessToken.substring(0, 10)}...`);
-      const emailData = await fetchEmailById(user.accessToken, emailId);
-      
-      if (!emailData) {
-        throw new Error('Could not retrieve email details');
-      }
-      
-      setEmail(emailData);
-      
-      // Mark the email as read if it's not already read
-      if (emailData && !emailData.isRead) {
-        console.log(`Marking email ${emailId} as read`);
-        await markEmailAsRead(user.accessToken, emailId);
-        if (onEmailRead) {
-          onEmailRead(emailId);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load email details:', error);
-      let errorMessage = 'Could not load email details. Please try again later.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('session has expired')) {
-          errorMessage = 'Your session has expired. Please log in again.';
-          // Redirect to login after a short delay
-          setTimeout(() => {
-            localStorage.removeItem('emailAppUser');
-            window.location.href = '/login';
-          }, 3000);
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadEmailDetails = async () => {
+      if (!emailId || !user?.accessToken) {
+        setEmail(null);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const emailData = await fetchEmailById(user.accessToken, emailId);
+        setEmail(emailData);
+      } catch (error) {
+        console.error('Failed to load email details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadEmailDetails();
   }, [emailId, user?.accessToken]);
 
@@ -78,35 +43,6 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead
         <div className="text-center">
           <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading email content...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Error Loading Email</h3>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <div className="flex flex-col gap-2">
-            <Button onClick={loadEmailDetails}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
-            </Button>
-            {error.includes('session has expired') && (
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  localStorage.removeItem('emailAppUser');
-                  window.location.href = '/login';
-                }}
-              >
-                Return to Login
-              </Button>
-            )}
-          </div>
         </div>
       </div>
     );
