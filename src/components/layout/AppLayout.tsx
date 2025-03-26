@@ -5,12 +5,23 @@ import { EmailList } from '../emails/EmailList';
 import { EmailPreview } from '../emails/EmailPreview';
 import { AIAssistant } from '../ai/AIAssistant';
 import { SearchBar } from '../ui/SearchBar';
-import { Settings, Bell } from 'lucide-react';
+import { Settings, Bell, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 export const AppLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [assistantOpen, setAssistantOpen] = React.useState(false);
   const [selectedEmail, setSelectedEmail] = React.useState<number | null>(null);
+  const { user, logout } = useAuth();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -46,9 +57,36 @@ export const AppLayout: React.FC = () => {
             <button className="button-icon" aria-label="Settings">
               <Settings size={20} className="text-foreground/70" />
             </button>
-            <button className="ml-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-              <span className="text-xs font-medium">JD</span>
-            </button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="ml-2 h-8 w-8 rounded-full flex items-center justify-center overflow-hidden">
+                  <Avatar>
+                    {user?.picture ? (
+                      <AvatarImage src={user.picture} alt={user.name} />
+                    ) : null}
+                    <AvatarFallback>
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <div className="font-medium">{user?.name}</div>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-sm text-muted-foreground">
+                  {user?.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="text-destructive flex items-center gap-2">
+                  <LogOut size={16} />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
