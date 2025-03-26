@@ -49,7 +49,6 @@ export const EmailList: React.FC<EmailListProps> = ({
       console.log(`Loaded ${emailData.length} emails`);
       setEmails(emailData);
       
-      // Update unread count
       const unreadCount = emailData.filter(email => !email.isRead).length;
       console.log(`Unread count: ${unreadCount}`);
       if (onUnreadCountChange) {
@@ -72,7 +71,6 @@ export const EmailList: React.FC<EmailListProps> = ({
   useEffect(() => {
     loadEmails();
     
-    // Refresh emails every 5 minutes
     const intervalId = setInterval(() => loadEmails(false), 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
@@ -87,7 +85,6 @@ export const EmailList: React.FC<EmailListProps> = ({
       )
     );
     
-    // Update unread count
     const unreadCount = emails.filter(email => 
       email.id !== emailId && !email.isRead
     ).length;
@@ -261,7 +258,6 @@ export const EmailList: React.FC<EmailListProps> = ({
         )}
       </div>
       
-      {/* Loading overlay for when refreshing */}
       {refreshing && (
         <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
           <div className="bg-card p-4 rounded-lg shadow-lg flex items-center gap-2">
