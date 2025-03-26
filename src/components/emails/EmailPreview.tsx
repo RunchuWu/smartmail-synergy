@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchEmailById, EmailDetail, markEmailAsRead } from '@/lib/gmail';
 import { ComposeEmail } from './ComposeEmail';
@@ -14,7 +13,6 @@ interface EmailPreviewProps {
 export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead }) => {
   const [email, setEmail] = useState<EmailDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [replyOpen, setReplyOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
@@ -26,21 +24,12 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead
       }
       
       setLoading(true);
-      setError(null);
-      
       try {
-        console.log(`Loading email details for ID: ${emailId}`);
         const emailData = await fetchEmailById(user.accessToken, emailId);
-        
-        if (!emailData) {
-          throw new Error('Could not retrieve email details');
-        }
-        
         setEmail(emailData);
         
         // Mark the email as read if it's not already read
         if (emailData && !emailData.isRead) {
-          console.log(`Marking email ${emailId} as read`);
           await markEmailAsRead(user.accessToken, emailId);
           if (onEmailRead) {
             onEmailRead(emailId);
@@ -48,7 +37,6 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead
         }
       } catch (error) {
         console.error('Failed to load email details:', error);
-        setError('Could not load email details. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -63,43 +51,6 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead
         <div className="text-center">
           <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading email content...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Error Loading Email</h3>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <Button 
-            onClick={() => {
-              setLoading(true);
-              setError(null);
-              // Re-fetch the email
-              if (emailId && user?.accessToken) {
-                fetchEmailById(user.accessToken, emailId)
-                  .then(data => {
-                    if (data) {
-                      setEmail(data);
-                      setLoading(false);
-                    } else {
-                      throw new Error('Could not retrieve email details');
-                    }
-                  })
-                  .catch(e => {
-                    console.error('Error retrying email fetch:', e);
-                    setError('Could not load email details. Please try again later.');
-                    setLoading(false);
-                  });
-              }
-            }}
-          >
-            Try Again
-          </Button>
         </div>
       </div>
     );
