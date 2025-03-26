@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,15 +12,9 @@ interface EmailListProps {
   selectedEmail: string | null;
   onSelectEmail: (id: string) => void;
   currentFolder: string;
-  onUnreadCountChange?: (count: number) => void;
 }
 
-export const EmailList: React.FC<EmailListProps> = ({ 
-  selectedEmail, 
-  onSelectEmail, 
-  currentFolder,
-  onUnreadCountChange 
-}) => {
+export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEmail, currentFolder }) => {
   const [emails, setEmails] = useState<EmailDisplay[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [composeOpen, setComposeOpen] = useState<boolean>(false);
@@ -33,12 +28,6 @@ export const EmailList: React.FC<EmailListProps> = ({
       try {
         const emailData = await fetchEmails(user.accessToken, 20, currentFolder);
         setEmails(emailData);
-        
-        // Update unread count
-        const unreadCount = emailData.filter(email => !email.isRead).length;
-        if (onUnreadCountChange) {
-          onUnreadCountChange(unreadCount);
-        }
       } catch (error) {
         console.error('Failed to load emails:', error);
         toast({
@@ -57,26 +46,7 @@ export const EmailList: React.FC<EmailListProps> = ({
     const intervalId = setInterval(loadEmails, 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
-  }, [user?.accessToken, currentFolder, onUnreadCountChange]);
-
-  const handleEmailRead = (emailId: string) => {
-    setEmails(prev => 
-      prev.map(email => 
-        email.id === emailId 
-          ? { ...email, isRead: true } 
-          : email
-      )
-    );
-    
-    // Update unread count
-    const unreadCount = emails.filter(email => 
-      email.id !== emailId && !email.isRead
-    ).length;
-    
-    if (onUnreadCountChange) {
-      onUnreadCountChange(unreadCount);
-    }
-  };
+  }, [user?.accessToken, currentFolder]);
 
   const getCategoryBadge = (category: string) => {
     const categories: Record<string, { label: string, variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -156,12 +126,7 @@ export const EmailList: React.FC<EmailListProps> = ({
           emails.map((email) => (
             <div 
               key={email.id}
-              onClick={() => {
-                onSelectEmail(email.id);
-                if (!email.isRead) {
-                  handleEmailRead(email.id);
-                }
-              }}
+              onClick={() => onSelectEmail(email.id)}
               className={`email-row animate-fade-in ${selectedEmail === email.id ? 'email-row-active' : ''} ${!email.isRead ? 'bg-secondary/30' : ''}`}
             >
               <div className="flex items-start gap-3">
