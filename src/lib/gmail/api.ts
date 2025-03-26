@@ -1,3 +1,4 @@
+
 import { toast } from "@/hooks/use-toast";
 import { EmailDisplay, EmailDetail, GmailEmail } from './types';
 import { getFolderQueryParam } from './formatters';
@@ -6,7 +7,13 @@ import { convertToEmailDisplay, convertToEmailDetail } from './converters';
 // Fetch emails from a specific folder
 export async function fetchEmails(accessToken: string, maxResults = 10, folder = 'inbox'): Promise<EmailDisplay[]> {
   try {
+    if (!accessToken) {
+      console.error('No access token provided for fetchEmails');
+      return [];
+    }
+    
     const query = getFolderQueryParam(folder);
+    console.log(`Fetching emails for folder: ${folder} with query: ${query}`);
     
     // Get message list
     const response = await fetch(
@@ -19,15 +26,20 @@ export async function fetchEmails(accessToken: string, maxResults = 10, folder =
     );
     
     if (!response.ok) {
-      throw new Error('Failed to fetch emails');
+      const errorData = await response.json().catch(() => null);
+      console.error('Failed to fetch emails:', response.status, errorData);
+      throw new Error(`Failed to fetch emails: ${response.status}`);
     }
     
     const data = await response.json();
     const messageIds = data.messages || [];
     
     if (!messageIds.length) {
+      console.log('No messages found for the specified folder');
       return [];
     }
+    
+    console.log(`Found ${messageIds.length} messages, fetching details...`);
     
     // Fetch details for each message
     const emailPromises = messageIds.map(async (msg: { id: string }) => {
@@ -41,6 +53,7 @@ export async function fetchEmails(accessToken: string, maxResults = 10, folder =
       );
       
       if (!msgResponse.ok) {
+        console.error(`Failed to fetch email with ID ${msg.id}:`, msgResponse.status);
         throw new Error(`Failed to fetch email with ID: ${msg.id}`);
       }
       
@@ -63,6 +76,13 @@ export async function fetchEmails(accessToken: string, maxResults = 10, folder =
 // Fetch a specific email by ID
 export async function fetchEmailById(accessToken: string, emailId: string): Promise<EmailDetail | null> {
   try {
+    if (!accessToken) {
+      console.error('No access token provided for fetchEmailById');
+      return null;
+    }
+    
+    console.log(`Fetching email details for ID: ${emailId}`);
+    
     const response = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
       {
@@ -73,6 +93,8 @@ export async function fetchEmailById(accessToken: string, emailId: string): Prom
     );
     
     if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      console.error('Failed to fetch email details:', response.status, errorData);
       throw new Error('Failed to fetch email details');
     }
     
@@ -92,6 +114,13 @@ export async function fetchEmailById(accessToken: string, emailId: string): Prom
 // Mark an email as read
 export async function markEmailAsRead(accessToken: string, emailId: string): Promise<boolean> {
   try {
+    if (!accessToken) {
+      console.error('No access token provided for markEmailAsRead');
+      return false;
+    }
+    
+    console.log(`Marking email ${emailId} as read`);
+    
     const response = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/modify`,
       {
@@ -107,9 +136,12 @@ export async function markEmailAsRead(accessToken: string, emailId: string): Pro
     );
     
     if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      console.error('Failed to mark email as read:', response.status, errorData);
       throw new Error('Failed to mark email as read');
     }
     
+    console.log(`Email ${emailId} marked as read successfully`);
     return true;
   } catch (error) {
     console.error('Error marking email as read:', error);
