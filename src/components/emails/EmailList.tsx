@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -131,11 +132,6 @@ export const EmailList: React.FC<EmailListProps> = ({
     return folderNames[currentFolder] || 'Inbox';
   };
 
-  const handleRefresh = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    loadEmails(false);
-  };
-
   const unreadCount = emails.filter(email => !email.isRead).length;
 
   if (loading && emails.length === 0) {
@@ -206,7 +202,7 @@ export const EmailList: React.FC<EmailListProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleRefresh}
+            onClick={() => loadEmails(false)}
             className="h-8 w-8 rounded-full"
             disabled={refreshing}
           >
