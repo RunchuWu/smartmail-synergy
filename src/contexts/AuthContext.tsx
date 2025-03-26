@@ -90,13 +90,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
       
-      // Open popup for Google OAuth
+      // Open popup for Google OAuth with both read and send scopes
       const popup = window.open(
         'https://accounts.google.com/o/oauth2/v2/auth?' +
         'client_id=355105230955-8ob8hge99n22ig2el2h1jdgfluc9e385.apps.googleusercontent.com' + 
         '&redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/callback') +
         '&response_type=token' +
-        '&scope=' + encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly profile email') +
+        '&scope=' + encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send profile email') +
         '&prompt=select_account',
         'GoogleAuth',
         `width=${width},height=${height},left=${left},top=${top}`
