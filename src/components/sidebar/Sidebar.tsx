@@ -2,7 +2,6 @@
 import React from 'react';
 import { Mail, Send, Archive, Trash, File, Calendar, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -21,8 +20,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onComposeClick,
   folderUnreadCounts = {}
 }) => {
-  const { user } = useAuth();
-  
   const sidebarItems = [
     { id: 'inbox', icon: Mail, label: 'Inbox', count: folderUnreadCounts.inbox || 0 },
     { id: 'sent', icon: Send, label: 'Sent' },
@@ -94,19 +91,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <>
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                 <span className="text-xs font-medium">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  {window.currentUser?.name?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@example.com'}</p>
+                <p className="text-sm font-medium truncate">{window.currentUser?.name || 'User'}</p>
+                <p className="text-xs text-muted-foreground truncate">{window.currentUser?.email || 'user@example.com'}</p>
               </div>
             </>
           )}
           {collapsed && (
             <div className="mx-auto w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
               <span className="text-xs font-medium">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                {window.currentUser?.name?.charAt(0).toUpperCase() || 'U'}
               </span>
             </div>
           )}
