@@ -2,6 +2,8 @@
 import React from 'react';
 import { Mail, Send, Archive, Trash, File, Calendar, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -18,6 +20,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onFolderChange,
   onComposeClick
 }) => {
+  const { user } = useAuth();
+  
   const sidebarItems = [
     { id: 'inbox', icon: Mail, label: 'Inbox', count: 12 },
     { id: 'sent', icon: Send, label: 'Sent' },
@@ -27,6 +31,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'calendar', icon: Calendar, label: 'Calendar' },
     { id: 'reminders', icon: Clock, label: 'Reminders', count: 1 },
   ];
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!user || !user.name) return 'U';
+    const nameParts = user.name.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+    }
+    return user.name.charAt(0).toUpperCase();
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -87,18 +101,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center gap-3">
           {!collapsed && (
             <>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                <span className="text-xs font-medium">JD</span>
-              </div>
+              <Avatar>
+                {user?.picture ? (
+                  <AvatarImage src={user.picture} alt={user.name || 'User'} />
+                ) : (
+                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                )}
+              </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground truncate">john.doe@example.com</p>
+                <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@example.com'}</p>
               </div>
             </>
           )}
           {collapsed && (
-            <div className="mx-auto w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-              <span className="text-xs font-medium">JD</span>
+            <div className="mx-auto">
+              <Avatar>
+                {user?.picture ? (
+                  <AvatarImage src={user.picture} alt={user.name || 'User'} />
+                ) : (
+                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                )}
+              </Avatar>
             </div>
           )}
         </div>

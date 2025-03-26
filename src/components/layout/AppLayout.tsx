@@ -31,6 +31,19 @@ export const AppLayout: React.FC = () => {
     setSelectedEmail(null); // Clear selected email when changing folders
   };
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  const getUserInitials = () => {
+    if (!user || !user.name) return 'U';
+    const nameParts = user.name.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+    }
+    return user.name.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
@@ -41,7 +54,7 @@ export const AppLayout: React.FC = () => {
       >
         <Sidebar 
           collapsed={sidebarCollapsed} 
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+          onToggle={handleToggleSidebar} 
           activeFolder={currentFolder}
           onFolderChange={handleFolderChange}
           onComposeClick={() => setComposeOpen(true)}
@@ -77,11 +90,10 @@ export const AppLayout: React.FC = () => {
                 <button className="ml-2 h-8 w-8 rounded-full flex items-center justify-center overflow-hidden">
                   <Avatar>
                     {user?.picture ? (
-                      <AvatarImage src={user.picture} alt={user.name} />
-                    ) : null}
-                    <AvatarFallback>
-                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                    </AvatarFallback>
+                      <AvatarImage src={user.picture} alt={user.name || 'User'} />
+                    ) : (
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    )}
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
@@ -89,10 +101,10 @@ export const AppLayout: React.FC = () => {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="flex items-center gap-2">
-                  <div className="font-medium">{user?.name}</div>
+                  <div className="font-medium">{user?.name || 'User'}</div>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-sm text-muted-foreground">
-                  {user?.email}
+                  {user?.email || 'user@example.com'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="text-destructive flex items-center gap-2">
