@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchEmailById, EmailDetail } from '@/lib/gmail';
+import { fetchEmailById, EmailDetail, markEmailAsRead } from '@/lib/gmail';
 import { ComposeEmail } from './ComposeEmail';
 import { Button } from '@/components/ui/button';
 
 interface EmailPreviewProps {
   emailId: string | null;
+  onEmailRead?: (emailId: string) => void;
 }
 
-export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
+export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId, onEmailRead }) => {
   const [email, setEmail] = useState<EmailDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [replyOpen, setReplyOpen] = useState<boolean>(false);
@@ -27,6 +27,14 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
       try {
         const emailData = await fetchEmailById(user.accessToken, emailId);
         setEmail(emailData);
+        
+        // Mark the email as read if it's not already read
+        if (emailData && !emailData.isRead) {
+          await markEmailAsRead(user.accessToken, emailId);
+          if (onEmailRead) {
+            onEmailRead(emailId);
+          }
+        }
       } catch (error) {
         console.error('Failed to load email details:', error);
       } finally {
@@ -35,7 +43,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
     };
 
     loadEmailDetails();
-  }, [emailId, user?.accessToken]);
+  }, [emailId, user?.accessToken, onEmailRead]);
 
   if (loading) {
     return (
