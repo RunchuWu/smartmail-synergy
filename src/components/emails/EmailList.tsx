@@ -41,7 +41,7 @@ export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEma
       id: 4,
       from: 'Alex Chen',
       subject: 'Dinner next week?',
-      preview: 'Hey! I was wondering if you'd like to grab dinner next week? I found this amazing new restaurant...',
+      preview: 'Hey! I was wondering if you\'d like to grab dinner next week? I found this amazing new restaurant...',
       time: 'Yesterday',
       isRead: true,
       category: 'personal'
