@@ -98,31 +98,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div className="mt-auto p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3">
+        <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+          <Avatar className="w-8 h-8 flex-shrink-0">
+            {user?.picture ? (
+              <AvatarImage src={user.picture} alt={user.name || 'User'} />
+            ) : (
+              <AvatarFallback>{getUserInitials()}</AvatarFallback>
+            )}
+          </Avatar>
           {!collapsed && (
-            <>
-              <Avatar>
-                {user?.picture ? (
-                  <AvatarImage src={user.picture} alt={user.name || 'User'} />
-                ) : (
-                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                )}
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@example.com'}</p>
-              </div>
-            </>
-          )}
-          {collapsed && (
-            <div className="mx-auto">
-              <Avatar>
-                {user?.picture ? (
-                  <AvatarImage src={user.picture} alt={user.name || 'User'} />
-                ) : (
-                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                )}
-              </Avatar>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@example.com'}</p>
             </div>
           )}
         </div>
