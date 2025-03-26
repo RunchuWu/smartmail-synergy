@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchEmails, EmailDisplay } from '@/lib/gmail';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ComposeEmail } from './ComposeEmail';
 
@@ -25,59 +25,52 @@ export const EmailList: React.FC<EmailListProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState<boolean>(false);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
   const { user } = useAuth();
 
-  const loadEmails = async (showLoading = true) => {
-    if (!user?.accessToken) {
-      console.log('No access token available, cannot load emails');
-      setError('Authentication required. Please try logging in again.');
-      setLoading(false);
-      return;
-    }
-    
-    if (showLoading) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
-    
-    setError(null);
-    
-    try {
-      console.log(`Loading emails for folder: ${currentFolder} with token: ${user.accessToken.substring(0, 10)}...`);
-      const emailData = await fetchEmails(user.accessToken, 20, currentFolder);
-      console.log(`Loaded ${emailData.length} emails`);
-      setEmails(emailData);
-      
-      // Update unread count
-      const unreadCount = emailData.filter(email => !email.isRead).length;
-      console.log(`Unread count: ${unreadCount}`);
-      if (onUnreadCountChange) {
-        onUnreadCountChange(unreadCount);
-      }
-    } catch (error) {
-      console.error('Failed to load emails:', error);
-      setError('Could not load emails. Please try again later.');
-      toast({
-        title: "Error loading emails",
-        description: "Could not retrieve your emails. Please try again later.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
   useEffect(() => {
+    const loadEmails = async () => {
+      if (!user?.accessToken) {
+        console.log('No access token available, cannot load emails');
+        setError('Authentication required. Please try logging in again.');
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        console.log(`Loading emails for folder: ${currentFolder}`);
+        const emailData = await fetchEmails(user.accessToken, 20, currentFolder);
+        console.log(`Loaded ${emailData.length} emails`);
+        setEmails(emailData);
+        
+        // Update unread count
+        const unreadCount = emailData.filter(email => !email.isRead).length;
+        console.log(`Unread count: ${unreadCount}`);
+        if (onUnreadCountChange) {
+          onUnreadCountChange(unreadCount);
+        }
+      } catch (error) {
+        console.error('Failed to load emails:', error);
+        setError('Could not load emails. Please try again later.');
+        toast({
+          title: "Error loading emails",
+          description: "Could not retrieve your emails. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadEmails();
     
     // Refresh emails every 5 minutes
-    const intervalId = setInterval(() => loadEmails(false), 5 * 60 * 1000);
+    const intervalId = setInterval(loadEmails, 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
-  }, [user?.accessToken, currentFolder]);
+  }, [user?.accessToken, currentFolder, onUnreadCountChange]);
 
   const handleEmailRead = (emailId: string) => {
     setEmails(prev => 
@@ -171,20 +164,16 @@ export const EmailList: React.FC<EmailListProps> = ({
             <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
             <h3 className="text-base font-medium mb-1">Failed to load emails</h3>
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <div className="flex flex-col gap-2 items-center">
-              <Button onClick={loadEmails}>
-                Try Again
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  localStorage.removeItem('emailAppUser');
-                  window.location.href = '/login';
-                }}
-              >
-                Return to Login
-              </Button>
-            </div>
+            <Button 
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                // Trigger a re-render which will reload the emails
+                window.location.reload();
+              }}
+            >
+              Try Again
+            </Button>
           </div>
         </div>
       </div>
@@ -202,16 +191,6 @@ export const EmailList: React.FC<EmailListProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => loadEmails(false)}
-            className="h-8 w-8 rounded-full"
-            disabled={refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Refresh</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
             onClick={() => setComposeOpen(true)}
             className="h-8 w-8 rounded-full"
           >
@@ -220,7 +199,6 @@ export const EmailList: React.FC<EmailListProps> = ({
           </Button>
         </div>
       </div>
-
       <div className="divide-y divide-border flex-1">
         {emails.length === 0 && !loading ? (
           <div className="p-4 text-center text-muted-foreground">
@@ -257,19 +235,10 @@ export const EmailList: React.FC<EmailListProps> = ({
         )}
       </div>
       
-      {/* Loading overlay for when refreshing */}
-      {refreshing && (
-        <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-          <div className="bg-card p-4 rounded-lg shadow-lg flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Refreshing...</span>
-          </div>
-        </div>
-      )}
-      
       {composeOpen && (
         <ComposeEmail isOpen={composeOpen} onClose={() => setComposeOpen(false)} />
       )}
     </div>
   );
 };
+
