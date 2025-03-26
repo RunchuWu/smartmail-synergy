@@ -1,40 +1,49 @@
 
-import React from 'react';
-import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchEmailById, EmailDetail } from '@/lib/gmail';
 
 interface EmailPreviewProps {
-  emailId: number | null;
+  emailId: string | null;
 }
 
 export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
-  // Selected email would typically come from a state or API
-  // Using a mock email for now
-  const email = emailId
-    ? {
-        id: emailId,
-        from: {
-          name: 'Sarah Johnson',
-          email: 'sarah.johnson@example.com',
-        },
-        to: 'john.doe@example.com',
-        subject: 'Project timeline updates',
-        date: 'September 28, 2023, 9:15 AM',
-        content: `
-          <p>Hi John,</p>
-          <p>I wanted to share some updates regarding our project timeline. After reviewing the current progress and discussing with the team, we've made some adjustments to ensure we can deliver everything with the quality we expect.</p>
-          <p>Here are the key updates:</p>
-          <ul>
-            <li>Design phase: Extended by 3 days to incorporate additional feedback</li>
-            <li>Development sprint 1: Starting on October 5th instead of October 2nd</li>
-            <li>Testing phase: Remains unchanged, but we'll be bringing in an additional QA resource</li>
-          </ul>
-          <p>These changes will push our final delivery date by approximately one week, but we believe this will result in a much better end product. Please let me know if you have any concerns about these adjustments.</p>
-          <p>Also, would you be available for a quick call tomorrow to discuss these changes in more detail? I'm free between 1-3pm or after 4:30pm.</p>
-          <p>Best regards,<br>Sarah</p>
-        `,
-        hasAttachments: false,
+  const [email, setEmail] = useState<EmailDetail | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const loadEmailDetails = async () => {
+      if (!emailId || !user?.accessToken) {
+        setEmail(null);
+        return;
       }
-    : null;
+      
+      setLoading(true);
+      try {
+        const emailData = await fetchEmailById(user.accessToken, emailId);
+        setEmail(emailData);
+      } catch (error) {
+        console.error('Failed to load email details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEmailDetails();
+  }, [emailId, user?.accessToken]);
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading email content...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!email) {
     return (
@@ -71,14 +80,14 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-              {email.from.name.charAt(0)}
+              {email.from.charAt(0)}
             </div>
             <div>
-              <div className="flex items-baseline space-x-2">
-                <h3 className="text-base font-medium">{email.from.name}</h3>
-                <span className="text-sm text-muted-foreground">&lt;{email.from.email}&gt;</span>
+              <div className="flex items-baseline space-x-2 flex-wrap">
+                <h3 className="text-base font-medium">{email.from}</h3>
+                <span className="text-sm text-muted-foreground">&lt;{email.fromEmail}&gt;</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1 flex-wrap">
                 <span>To: {email.to}</span>
                 <span>•</span>
                 <span>{email.date}</span>

@@ -20,7 +20,7 @@ import {
 export const AppLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [assistantOpen, setAssistantOpen] = React.useState(false);
-  const [selectedEmail, setSelectedEmail] = React.useState<number | null>(null);
+  const [selectedEmail, setSelectedEmail] = React.useState<string | null>(null);
   const { user, logout } = useAuth();
 
   return (
