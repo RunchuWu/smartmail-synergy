@@ -8,6 +8,8 @@ interface User {
   email: string;
   picture: string;
   accessToken: string;
+  expiresAt?: number;
+  refreshToken?: string;
 }
 
 interface AuthContextType {
@@ -37,7 +39,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const savedUser = localStorage.getItem('emailAppUser');
       if (savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser) as User;
+          
+          // Check if the token is expired
+          if (parsedUser.expiresAt && parsedUser.expiresAt < Date.now()) {
+            // Token expired, need to logout or refresh
+            console.log('Token expired, logging out');
+            localStorage.removeItem('emailAppUser');
+            setUser(null);
+          } else {
+            setUser(parsedUser);
+          }
         } catch (error) {
           console.error('Failed to parse saved user:', error);
           localStorage.removeItem('emailAppUser');
@@ -47,6 +59,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     checkExistingSession();
+  }, []);
+  
+  // Setup message listener for OAuth popup window communication
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from our own origin
+      if (event.origin !== window.location.origin) return;
+      
+      // Check if this is an auth message from our popup
+      if (event.data?.type === 'auth_result' && event.data?.user) {
+        setUser(event.data.user);
+        localStorage.setItem('emailAppUser', JSON.stringify(event.data.user));
+        toast({
+          title: "Authentication successful",
+          description: `Welcome, ${event.data.user.name}!`,
+        });
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const login = async () => {
@@ -73,30 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Failed to open popup window for authentication');
       }
 
-      // This is for demo purposes only - in a real implementation, 
-      // you would handle the OAuth callback properly
-      toast({
-        title: "Authentication Demo",
-        description: "This is a demonstration. In a real app, Google OAuth would be fully implemented."
-      });
-
-      // For demonstration, we'll create a mock user after a delay
-      setTimeout(() => {
-        const mockUser = {
-          id: '12345',
-          name: 'John Doe',
-          email: 'john.doe@gmail.com',
-          picture: 'https://randomuser.me/api/portraits/men/1.jpg',
-          accessToken: 'mock-token-xyz'
-        };
-        
-        setUser(mockUser);
-        localStorage.setItem('emailAppUser', JSON.stringify(mockUser));
-        
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-      }, 2000);
+      // The popup will redirect to our callback URL
+      // We'll receive the result via the message event listener
       
     } catch (error) {
       console.error('Login error:', error);
