@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Reply, Forward, Archive, Trash, MoreHorizontal, Mail, Calendar, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchEmailById, EmailDetail } from '@/lib/gmail';
+import { ComposeEmail } from './ComposeEmail';
+import { Button } from '@/components/ui/button';
 
 interface EmailPreviewProps {
   emailId: string | null;
@@ -11,6 +13,7 @@ interface EmailPreviewProps {
 export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
   const [email, setEmail] = useState<EmailDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [replyOpen, setReplyOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -110,16 +113,33 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailId }) => {
 
       <div className="border-t border-border p-4">
         <div className="flex items-center space-x-3">
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+          <Button 
+            onClick={() => setReplyOpen(true)}
+            className="flex items-center justify-center gap-2"
+          >
             <Reply size={16} />
             <span>Reply</span>
-          </button>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors">
+          </Button>
+          <Button 
+            variant="secondary"
+            className="flex items-center justify-center gap-2"
+          >
             <Forward size={16} />
             <span>Forward</span>
-          </button>
+          </Button>
         </div>
       </div>
+
+      {replyOpen && (
+        <ComposeEmail 
+          isOpen={replyOpen} 
+          onClose={() => setReplyOpen(false)}
+          replyTo={{
+            to: email.fromEmail,
+            subject: email.subject
+          }}
+        />
+      )}
     </div>
   );
 };

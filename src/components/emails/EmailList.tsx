@@ -4,16 +4,20 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchEmails, EmailDisplay } from '@/lib/gmail';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ComposeEmail } from './ComposeEmail';
 
 interface EmailListProps {
   selectedEmail: string | null;
   onSelectEmail: (id: string) => void;
+  currentFolder: string;
 }
 
-export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEmail }) => {
+export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEmail, currentFolder }) => {
   const [emails, setEmails] = useState<EmailDisplay[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [composeOpen, setComposeOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -22,7 +26,7 @@ export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEma
       
       setLoading(true);
       try {
-        const emailData = await fetchEmails(user.accessToken, 20);
+        const emailData = await fetchEmails(user.accessToken, 20, currentFolder);
         setEmails(emailData);
       } catch (error) {
         console.error('Failed to load emails:', error);
@@ -42,7 +46,7 @@ export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEma
     const intervalId = setInterval(loadEmails, 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
-  }, [user?.accessToken]);
+  }, [user?.accessToken, currentFolder]);
 
   const getCategoryBadge = (category: string) => {
     const categories: Record<string, { label: string, variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -66,13 +70,25 @@ export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEma
     );
   };
 
+  const getFolderTitle = () => {
+    const folderNames: Record<string, string> = {
+      'inbox': 'Inbox',
+      'sent': 'Sent',
+      'draft': 'Drafts',
+      'trash': 'Trash',
+      'archive': 'Archive'
+    };
+    
+    return folderNames[currentFolder] || 'Inbox';
+  };
+
   const unreadCount = emails.filter(email => !email.isRead).length;
 
   if (loading && emails.length === 0) {
     return (
       <div className="h-full flex flex-col">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="text-base font-medium">Inbox</h2>
+          <h2 className="text-base font-medium">{getFolderTitle()}</h2>
           <span className="text-sm text-muted-foreground">Loading...</span>
         </div>
         <div className="flex-1 flex items-center justify-center">
@@ -83,12 +99,25 @@ export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEma
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto flex flex-col">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-        <h2 className="text-base font-medium">Inbox</h2>
-        <span className="text-sm text-muted-foreground">{unreadCount} unread</span>
+        <h2 className="text-base font-medium">{getFolderTitle()}</h2>
+        <div className="flex items-center gap-2">
+          {currentFolder === 'inbox' && (
+            <span className="text-sm text-muted-foreground">{unreadCount} unread</span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setComposeOpen(true)}
+            className="h-8 w-8 rounded-full"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="sr-only">Compose Email</span>
+          </Button>
+        </div>
       </div>
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-border flex-1">
         {emails.length === 0 && !loading ? (
           <div className="p-4 text-center text-muted-foreground">
             No emails found
@@ -118,6 +147,10 @@ export const EmailList: React.FC<EmailListProps> = ({ selectedEmail, onSelectEma
           ))
         )}
       </div>
+      
+      {composeOpen && (
+        <ComposeEmail isOpen={composeOpen} onClose={() => setComposeOpen(false)} />
+      )}
     </div>
   );
 };

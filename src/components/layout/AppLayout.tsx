@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Sidebar } from '../sidebar/Sidebar';
 import { EmailList } from '../emails/EmailList';
 import { EmailPreview } from '../emails/EmailPreview';
@@ -8,6 +8,7 @@ import { SearchBar } from '../ui/SearchBar';
 import { Settings, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ComposeEmail } from '../emails/ComposeEmail';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -18,10 +19,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const AppLayout: React.FC = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
-  const [assistantOpen, setAssistantOpen] = React.useState(false);
-  const [selectedEmail, setSelectedEmail] = React.useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [currentFolder, setCurrentFolder] = useState('inbox');
   const { user, logout } = useAuth();
+
+  const handleFolderChange = (folder: string) => {
+    setCurrentFolder(folder);
+    setSelectedEmail(null); // Clear selected email when changing folders
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -31,7 +39,13 @@ export const AppLayout: React.FC = () => {
           sidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
-        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        <Sidebar 
+          collapsed={sidebarCollapsed} 
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+          activeFolder={currentFolder}
+          onFolderChange={handleFolderChange}
+          onComposeClick={() => setComposeOpen(true)}
+        />
       </div>
 
       {/* Main content area */}
@@ -94,7 +108,11 @@ export const AppLayout: React.FC = () => {
         <div className="flex flex-1 overflow-hidden">
           {/* Email list */}
           <div className="w-80 border-r border-border overflow-y-auto bg-white">
-            <EmailList selectedEmail={selectedEmail} onSelectEmail={setSelectedEmail} />
+            <EmailList 
+              selectedEmail={selectedEmail} 
+              onSelectEmail={setSelectedEmail} 
+              currentFolder={currentFolder}
+            />
           </div>
           
           {/* Email preview */}
@@ -112,6 +130,11 @@ export const AppLayout: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Compose Email Dialog */}
+      {composeOpen && (
+        <ComposeEmail isOpen={composeOpen} onClose={() => setComposeOpen(false)} />
+      )}
     </div>
   );
 };

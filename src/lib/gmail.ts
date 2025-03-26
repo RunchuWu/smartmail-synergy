@@ -192,12 +192,27 @@ export function convertToEmailDetail(email: GmailEmail): EmailDetail {
   };
 }
 
-// Fetch inbox emails
-export async function fetchEmails(accessToken: string, maxResults = 10): Promise<EmailDisplay[]> {
+// Map folder names to Gmail label IDs
+export function getFolderQueryParam(folder: string): string {
+  const folderMap: Record<string, string> = {
+    'inbox': 'in:inbox',
+    'sent': 'in:sent',
+    'draft': 'in:draft',
+    'trash': 'in:trash',
+    'archive': '-in:inbox -in:trash -in:spam',
+  };
+  
+  return folderMap[folder] || 'in:inbox';
+}
+
+// Fetch emails from a specific folder
+export async function fetchEmails(accessToken: string, maxResults = 10, folder = 'inbox'): Promise<EmailDisplay[]> {
   try {
+    const query = getFolderQueryParam(folder);
+    
     // Get message list
     const response = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=in:inbox`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${encodeURIComponent(query)}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`
