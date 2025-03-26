@@ -1,3 +1,4 @@
+
 import { toast } from "@/hooks/use-toast";
 import { EmailDisplay, EmailDetail, GmailEmail } from './types';
 import { getFolderQueryParam } from './formatters';
@@ -86,33 +87,5 @@ export async function fetchEmailById(accessToken: string, emailId: string): Prom
       variant: "destructive"
     });
     return null;
-  }
-}
-
-// Mark an email as read
-export async function markEmailAsRead(accessToken: string, emailId: string): Promise<boolean> {
-  try {
-    const response = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/modify`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          removeLabelIds: ['UNREAD']
-        })
-      }
-    );
-    
-    if (!response.ok) {
-      throw new Error('Failed to mark email as read');
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error marking email as read:', error);
-    return false;
   }
 }
