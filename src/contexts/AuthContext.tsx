@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Open popup for Google OAuth
       const popup = window.open(
         'https://accounts.google.com/o/oauth2/v2/auth?' +
-        'client_id=YOUR_GOOGLE_CLIENT_ID_HERE' + // Replace with your actual client ID
+        'client_id=355105230955-8ob8hge99n22ig2el2h1jdgfluc9e385.apps.googleusercontent.com' + 
         '&redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/callback') +
         '&response_type=token' +
         '&scope=' + encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly profile email') +
