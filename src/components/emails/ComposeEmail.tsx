@@ -48,11 +48,12 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({ isOpen, onClose, rep
     setSending(true);
     
     try {
-      // Create email MIME message
+      // Create email MIME message with proper headers
       const emailContent = [
-        `From: ${user.email}`,
+        `From: ${user.name} <${user.email}>`,
         `To: ${to}`,
         `Subject: ${subject}`,
+        'MIME-Version: 1.0',
         'Content-Type: text/html; charset=utf-8',
         '',
         content
@@ -64,7 +65,7 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({ isOpen, onClose, rep
         .replace(/\//g, '_')
         .replace(/=+$/, '');
       
-      // Send the email using Gmail API
+      // Send the email using Gmail API with the proper format
       const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
         method: 'POST',
         headers: {

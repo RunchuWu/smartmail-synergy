@@ -2,6 +2,7 @@
 import React from 'react';
 import { Mail, Send, Archive, Trash, File, Calendar, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -9,6 +10,7 @@ interface SidebarProps {
   activeFolder: string;
   onFolderChange: (folder: string) => void;
   onComposeClick: () => void;
+  folderUnreadCounts?: Record<string, number>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -16,16 +18,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggle, 
   activeFolder, 
   onFolderChange,
-  onComposeClick
+  onComposeClick,
+  folderUnreadCounts = {}
 }) => {
+  const { user } = useAuth();
+  
   const sidebarItems = [
-    { id: 'inbox', icon: Mail, label: 'Inbox', count: 12 },
+    { id: 'inbox', icon: Mail, label: 'Inbox', count: folderUnreadCounts.inbox || 0 },
     { id: 'sent', icon: Send, label: 'Sent' },
     { id: 'archive', icon: Archive, label: 'Archive' },
-    { id: 'draft', icon: File, label: 'Drafts', count: 3 },
+    { id: 'draft', icon: File, label: 'Drafts', count: folderUnreadCounts.draft || 0 },
     { id: 'trash', icon: Trash, label: 'Trash' },
     { id: 'calendar', icon: Calendar, label: 'Calendar' },
-    { id: 'reminders', icon: Clock, label: 'Reminders', count: 1 },
+    { id: 'reminders', icon: Clock, label: 'Reminders', count: folderUnreadCounts.reminders || 0 },
   ];
 
   return (
@@ -69,12 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <item.icon size={18} />
                   {!collapsed && <span>{item.label}</span>}
                 </div>
-                {!collapsed && item.count && (
+                {!collapsed && item.count && item.count > 0 && (
                   <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
                     {item.count}
                   </span>
                 )}
-                {collapsed && item.count && (
+                {collapsed && item.count && item.count > 0 && (
                   <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full" />
                 )}
               </button>
@@ -88,17 +93,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed && (
             <>
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                <span className="text-xs font-medium">JD</span>
+                <span className="text-xs font-medium">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground truncate">john.doe@example.com</p>
+                <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@example.com'}</p>
               </div>
             </>
           )}
           {collapsed && (
             <div className="mx-auto w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-              <span className="text-xs font-medium">JD</span>
+              <span className="text-xs font-medium">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </span>
             </div>
           )}
         </div>
